@@ -2,10 +2,10 @@ import discord
 import re
 import asyncio
 import logging
+import time
 
 TOKEN = ''
 TEMP = ''
-CHANNEL_ID = 0
 COORDLE = 0
 MESSAGE = 'Co-ordle for'
 
@@ -26,7 +26,7 @@ def getWord(line):
     return ''.join(letters)
 
 '''
-Determines whether a co-ordle was solved from the color of the embed
+Determines the color of the embed
 '''
 def color(embed):
     color = embed.color
@@ -51,6 +51,7 @@ async def on_message(message):
         return
 
     if message.content.startswith('$get'):
+        startTime = time.time()
         solutions = set()
         channel = message.channel
         totalCoordles = 0
@@ -77,15 +78,24 @@ async def on_message(message):
                         match = re.search(r'The solution was `(\w+)`', str(f))
                         if match:
                             solutions.add(match.group(1))
+
                     totalCoordles += 1
 
+        runtime = time.time() - startTime
         updateTask.cancel()
 
         # send final results
         solutions = [s.upper() for s in solutions]
         if solutions:
-            await channel.send(', '.join(solutions))
-            await channel.send("Found " + str(len(solutions)) + " unique solutions in " + str(totalCoordles) + " total Co-ordles.")
+            # printing first and last 3 of the set
+            if len(solutions) > 6:
+                display_solutions = ', '.join(solutions[:3]) + " ... " + ', '.join(solutions[-3:])
+            else:
+                display_solutions = ', '.join(solutions)
+            await channel.send(display_solutions)
+
+            await channel.send(f"Found {len(solutions)} unique solutions in {totalCoordles} total Co-ordles.")
+            await channel.send(f"Runtime: {runtime:.2f}s")
             
             # write solutions to txt file
             with open("solutions.txt", "w") as f:
@@ -102,4 +112,4 @@ async def on_error(event, *args, **kwargs):
             await channel.send("Rate limited")
         logging.warning("Rate limit hit")
 
-client.run(TEMP)
+client.run(TOKEN)
