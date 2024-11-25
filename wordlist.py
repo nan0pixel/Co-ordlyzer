@@ -3,17 +3,17 @@ STRUCTURE
 
 Data Storage:
 - wordlist.txt: stores the unique words seen so far
-- lastRetrieval.json: stores the Unix timestamp in the Co-ordle title of the last co-ordle retrieved.
+- lastRetrieval.json: stores the timestamp (encoded in message ID) of the last Co-ordle
+    retrieved by channel
 
 Functions:
 - getWordlist: loads wordlist.txt
-- getNewWords: gets all words since the last retrieval using Unix timestamp.
-    - getTimestamp: gets timestamp (encoded in message ID) of last Co-ordle retrieved
+- getNewWords: gets all words since the last retrieval using timestamp.
+    - getTimestamp: gets timestamp of last Co-ordle retrieved
     - getCoordles: list of all solved and unsolved Co-ordles from channel since timestamp
     - loop message list, isSolvedCoordle(message)
         - if True -> getFound()
         - if False -> getSolution()
-        - if None -> skip (not a Co-ordle)
 - updateWordlist: compares the list of new words and the existing wordlist, 
                   adds new unique words to wordlist.txt
 - updateTimestamp: updates timestamp to that of the most recent Co-ordle retrieved
@@ -34,6 +34,7 @@ To-dos:
 '''
 
 import os
+import re
 import json
 import discord
 from discord.ext import commands
@@ -114,7 +115,6 @@ async def getCoordles(channel, timestamp):
         if isSolvedCoordle(message) is not None:
             coordles.append(message)
             #print(f"Found Co-ordle: ID {message.id}, Title: {message.embeds[0].title}") # for debugging
-    print(str(len(coordles))) # for debugging
     return coordles
 
 def loadJson(path):
@@ -168,11 +168,42 @@ def updateTimestamp(channel, coordles):
     else:
         print("No new Co-ordles retrieved")
 
+def getFound(coordle):
+    '''
+    Gets solution from solved Co-ordle
+    '''
+    embed = coordle.embeds[0]
+    description = embed.description or ""
+    found = description.strip().split('\n')[-1] # i.e. last guess
+    letters = re.findall(r':\w+_([a-zA-Z]):', found) # gets letters from emotes
+    word = ''.join(letters)
+    return word
+
+def getSolution(coordle):
+    '''
+    Gets solution from unsolved Co-ordle
+    '''
+    embed = coordle.embeds[0]
+    solution = embed.fields[-2].value # custom to Co-ordle structure
+    word = re.search(r'`(\w+)`', solution)
+    if word:
+        return word.group(1)
+    raise ValueError("Solution not found")
+
 async def getNewWords(channel):
+    '''
+    Gets all new words since the last Co-ordle retrieval and updates timestamp
+    '''
     words = []
     timestamp = getTimestamp(channel)
     coordles = await getCoordles(channel, timestamp)
+    for coordle in coordles:
+        if isSolvedCoordle(coordle):
+            words.append(getFound(coordle))
+        else:
+            words.append(getSolution(coordle))
     updateTimestamp(channel, coordles)
+    return words
 
 # --------- EXECUTION --------- #
 @bot.event
@@ -189,11 +220,10 @@ async def wordlist(ctx):
     #updateLastRetrieval(lastRetrieval)
 '''
 # --------- TEST --------- #
-'''
+
 @bot.command(name='test')
 async def test(ctx):
     channel = ctx.channel
-    await getNewWords(channel)
-'''
+    newWords = await getNewWords(channel)
 
 bot.run(TOKEN)
