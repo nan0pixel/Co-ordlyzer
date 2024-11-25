@@ -210,20 +210,14 @@ async def getNewWords(channel):
 async def on_ready():
     print(f'Logged in as {bot.user} (ID: {bot.user.id})')
     print('---------')
-'''
+
 @bot.command(name='wordlist')
 async def wordlist(ctx):
     channel = ctx.channel
     wordlist = getWordlist()
+    newWords = await getNewWords(channel)
 
     #updateWordlist(new_words)
     #updateLastRetrieval(lastRetrieval)
-'''
-# --------- TEST --------- #
-
-@bot.command(name='test')
-async def test(ctx):
-    channel = ctx.channel
-    newWords = await getNewWords(channel)
 
 bot.run(TOKEN)
