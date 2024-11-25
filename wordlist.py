@@ -10,7 +10,7 @@ Functions:
 - getNewWords: gets all words since the last retrieval using Unix timestamp.
     - getTimestamp: gets timestamp (encoded in message ID) of last Co-ordle retrieved
     - getCoordles: list of all solved and unsolved Co-ordles from channel since timestamp
-    - loop message list , isSolvedCoordle(message)
+    - loop message list, isSolvedCoordle(message)
         - if True -> getFound()
         - if False -> getSolution()
         - if None -> skip (not a Co-ordle)

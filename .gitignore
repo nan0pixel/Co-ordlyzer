@@ -155,6 +155,7 @@ cython_debug/
 # --- CUSTOM --- #
 # Storage folder (includes wordlist.txt, lastRetrieval.json)
 storage/
+.DS_Store
 
 # PyCharm
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
