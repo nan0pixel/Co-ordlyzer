@@ -155,6 +155,7 @@ cython_debug/
 # --- CUSTOM --- #
 # Storage folder (includes /wordlists, timestamps.json)
 storage/
+todo.md
 .DS_Store
 
 # PyCharm
