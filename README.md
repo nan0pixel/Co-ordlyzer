@@ -7,3 +7,6 @@ Complete:
 In-progress:
 * actual analysis functionality
 * expanding bot to multiple commands
+
+This project includes work originally created by [3Blue1Brown](https://github.com/3b1b) under the CC BY-NC-SA 4.0 License. 
+[Source](https://github.com/3b1b/videos/blob/master/_2022/wordle/simulations.py).
