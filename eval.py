@@ -12,11 +12,11 @@ Modifications to original code include:
 - updated ternary representation of pattern with np.int64 (was np.uint8)
     - handles larger integers for 6-letter version of Wordle
 - set word length as global constant (6) instead of determining length from first word of list
-- renamed functions for clarity and preference
+- renamed functions/variables for clarity and preference
     - words_to_int_arrays -> wordsToInts
     - generate_pattern_matrix -> generatePatterns
     - pattern_to_int_list -> intToPattern
-    - pattern_to_string -> patternToString
+    - etc.
 '''
 
 import os
@@ -34,6 +34,8 @@ STORAGE_FOLDER = os.path.join(PROJECT_FOLDER, 'storage')
 COORDLE_WORDLIST = os.path.join(STORAGE_FOLDER, 'CoordleWordlist.txt')
 SCRABBLE_WORDLIST = os.path.join(STORAGE_FOLDER, 'ScrabbleWordlist.txt')
 PATTERNS_FILE = os.path.join(STORAGE_FOLDER, 'patterns.npy')
+
+PATTERN_GRID = dict()
 
 def wordsToInts(words):
     return np.array([[ord(c)for c in w] for w in words], dtype=np.uint8)
@@ -77,9 +79,8 @@ def generatePatterns(guesses, answers):
     return patternsToInt
 
 def savePatterns():
-    guesses = getWordlist(SCRABBLE_WORDLIST)
-    answers = getWordlist(COORDLE_WORDLIST)
-    patterns = generatePatterns(guesses, answers)
+    wordlist = getWordlist(SCRABBLE_WORDLIST)
+    patterns = generatePatterns(wordlist, wordlist)
     np.save(PATTERNS_FILE, patterns)
 
 def intToPattern(pattern):
@@ -93,3 +94,32 @@ def intToPattern(pattern):
 def patternToString(pattern):
     color = {MISS: '⬛', MISPLACED: '🟨', EXACT: '🟩'}
     return ''.join(color[letter] for letter in intToPattern(pattern))
+
+def getPatterns(guesses, answers):
+    PATTERN_GRID['grid'] = np.load(PATTERNS_FILE)
+    PATTERN_GRID['index'] = dict(zip(
+        getWordlist(SCRABBLE_WORDLIST), it.count()
+    ))
+
+    grid = PATTERN_GRID['grid']
+    index = PATTERN_GRID['index']
+
+    indexGuesses = [index[word] for word in guesses]
+    indexAnswers = [index[word] for word in answers]
+    return grid[np.ix_(indexGuesses, indexAnswers)]
+
+def getPattern(guess, answer):
+    index = PATTERN_GRID['index']
+    if guess in index and answer in index:
+        return getPatterns([guess], [answer])[0, 0]
+    return None
+
+def getRemainingWords(guess, answer):
+    solutions = getWordlist(COORDLE_WORDLIST)
+    allPatterns = getPatterns([guess], solutions).flatten()
+    pattern = getPattern(guess, answer)
+    return list(np.array(solutions)[allPatterns == pattern])
+
+guesses = getWordlist(SCRABBLE_WORDLIST)
+answers = getWordlist(COORDLE_WORDLIST)
+patterns = getPatterns(guesses, answers)
