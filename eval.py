@@ -19,8 +19,8 @@ which is saved as a file for quicker reference.
     to Wiktionary, and a list of seen Co-ordle solutions put together from thousands of plays.
 
 --- CREDIT ---
-- The math behind all the entropy calculations uses original work by 3Blue1Brown (see readme for source), 
-  under CC BY-NC-SA 4.0 License. Modifications to original code include:
+- The math behind all the pattern determination & generation and  entropy calculations uses original work by 
+  3Blue1Brown (see readme for source), under CC BY-NC-SA 4.0 License. Modifications to original code include:
     - updated ternary representation of pattern with np.int64 (was np.uint8)
         - handles larger integers for 6-letter version of Wordle
     - modified code which was hardcoded to 5 letters to LENGTH letters (global const)
@@ -303,6 +303,14 @@ def getSkillScore(guess, expectedEntropies, possibleSols):
     optimal = rankings[0][1]
     weighingFactor = 1
     if guess not in possibleSols:
+        # this weighing factor penalizes guesses that could NOT POSSIBLY BE a solution, 
+        # given the pattern information we already have. The extent of the penalty 
+        # depends on how many possible solutions there are left - 
+        # if there are many solutions left, guessing a word that is known not to be the
+        # solution can still be very skillful if it helps cut down the solution space 
+        # significantly, and will receive minimal penalty. However, if there are only
+        # few solutions left, it is less strategic to make such a guess, so it would 
+        # receive a greater penalty. 
         weighingFactor = 1-1/len(possibleSols)
 
     infoRatio = actual / optimal if optimal != 0 else 1
