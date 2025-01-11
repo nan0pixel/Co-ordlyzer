@@ -78,7 +78,7 @@ load_dotenv()
 TOKEN = os.getenv('TOKEN')
 
 
-def wordsToInts(words):
+def wordsToInts(words): # credit: 3B1B
     return np.array([[ord(c)for c in w] for w in words], dtype=np.uint8)
 
 def getWordlist(file):
@@ -87,7 +87,7 @@ def getWordlist(file):
         wordlist.extend([word.strip() for word in f.readlines()])
     return wordlist
 
-def getPriors(solutions):
+def getPriors(solutions): # credit: 3B1B
     # returns dict of all guess words with 1s correponding to answer words
     guessWords = getWordlist(SCRABBLE_WORDLIST)
     return dict(
@@ -95,7 +95,7 @@ def getPriors(solutions):
         for w in guessWords
     )
 
-def generatePatternsGrid(guesses, answers):
+def generatePatternsGrid(guesses, answers): # adapted from 3B1B
     numGuesses = len(guesses)
     numAnswers = len(answers)
 
@@ -132,7 +132,7 @@ def savePatterns():
     patterns = generatePatternsGrid(wordlist, wordlist)
     np.save(PATTERNS_FILE, patterns)
 
-def intToPattern(pattern):
+def intToPattern(pattern): # adapted from 3B1B
     result = []
     curr = pattern
     for x in range(LENGTH):
@@ -140,11 +140,11 @@ def intToPattern(pattern):
         curr = curr // 3
     return result
 
-def patternToString(pattern):
+def patternToString(pattern): # adapted from 3B1B
     color = {MISS: '⬛', MISPLACED: '🟨', EXACT: '🟩'}
     return ''.join(color[letter] for letter in intToPattern(pattern))
 
-def getPatterns(guesses, answers):
+def getPatterns(guesses, answers): # adapted from 3B1B
     PATTERN_GRID['grid'] = np.load(PATTERNS_FILE)
     PATTERN_GRID['index'] = dict(zip(
         getWordlist(SCRABBLE_WORDLIST), it.count()
@@ -158,20 +158,20 @@ def getPatterns(guesses, answers):
 
     return grid[np.ix_(indexGuesses, indexAnswers)]
 
-def getPattern(guess, answer):
+def getPattern(guess, answer): # adapted from 3B1B
     index = PATTERN_GRID['index']
     if guess in index and answer in index:
         return getPatterns([guess], [answer])[0, 0]
     return None
 
-def getRemainingWords(guess, pattern, solutions):
+def getRemainingWords(guess, pattern, solutions): # adapted from 3B1B
     allPatterns = getPatterns([guess], solutions).flatten()
     return list(np.array(solutions)[allPatterns == pattern])
 
-def patternArrayToInt(array):
+def patternArrayToInt(array): # adapted from 3B1B
     return np.dot(array, 3**np.arange(LENGTH).astype(np.int64))
 
-def getPatternBuckets(guess, possibleWords):
+def getPatternBuckets(guess, possibleWords): # adapted from 3B1B
     '''
     For each guess, there are 3^LENGTH (in this case, 3^6) possible pattern results.
     This function groups a set of possible solutions by the pattern that the guess would generate
@@ -182,7 +182,7 @@ def getPatternBuckets(guess, possibleWords):
         buckets[index].append(word)
     return buckets
 
-def getWeights(words, priors):
+def getWeights(words, priors): # adapted from 3B1B
     # returns relative weights of a set of answer words (really, all equal
     # since the Co-ordle wordlist has equal chance of being answers)
     frequencies = np.array([priors[word] for word in words])
@@ -191,7 +191,7 @@ def getWeights(words, priors):
         return np.zeros(frequencies.shape)
     return frequencies / total
 
-def getPatternDistribution(allowedGuesses, answers, weights):
+def getPatternDistribution(allowedGuesses, answers, weights): # adapted from 3B1B
     '''
     Returns an array of arrays, one for each possible guess (Scrabble wordlist),
     with the % likelihood of seeing the patterns [0 1 ... 3^LENGTH]
@@ -205,11 +205,11 @@ def getPatternDistribution(allowedGuesses, answers, weights):
         distribution[n_range, patternGrid[:, j]] += prob
     return distribution
 
-def entropyOfDistribution(distribution, atol=1e-12):
+def entropyOfDistribution(distribution, atol=1e-12): # adapted from 3B1B
     axis = len(distribution.shape) - 1
     return entropy(distribution, base=2, axis=axis)
 
-def getEntropies(allowed_words, possible_words, weights):
+def getEntropies(allowed_words, possible_words, weights): # adapted from 3B1B
     if weights.sum() == 0:
         return np.zeros(len(allowed_words))
     distribution = getPatternDistribution(allowed_words, possible_words, weights)
