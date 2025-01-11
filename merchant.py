@@ -216,7 +216,7 @@ async def merchants(ctx):
 
     # OUTPUT
     rankings = '\n'.join(
-        f"{i+1}. <@!{user}>: `{percentage:.1f}%` of '{updatedStats[user]['gamesPlayed']}' played"
+        f"{i+1}. <@!{user}>: `{percentage:.1f}%` of `{updatedStats[user]['gamesPlayed']}` played"
         for i, (user, percentage) in enumerate(mercPercs)
     )
 
